@@ -14,7 +14,16 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.16.4",
+    "express-session": "^1.15.6",
     "mongodb": "^3.1.10",
-    "mongoose": "^5.3.14"
+    "mongoose": "^5.3.14",
+    "passport": "^0.4.0",
+    "passport-facebook": "^2.1.1",
+    "passport-facebook-token": "^3.3.0",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2"
+  },
+  "devDependencies": {
+    "@types/request-promise": "^4.1.42"
   }
 }
