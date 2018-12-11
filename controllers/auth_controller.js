@@ -1,32 +1,49 @@
-var express = require('express');
-var passport = require('passport');
-var requestFunction = require('request-promise');
-var fbRegisterService = require('../services/fb_resiger_service.js');
-var User = require('../models/user_model.js').User;
-var router = express.Router();
+const rp = require('request-promise');
+const SocialUser = require('../models/social_user_model.js').SocialUser;
+const userController = require('./user_controller');
 
-
-module.exports.checkOAuth = function (request, response) {
-
+module.exports.checkOAuthAndCreateUserIfNeeded = function (request, response) {
     var accessToken = request.body.accessToken;
+    var platform = request.body.platform;
 
-    fbRegisterService.getUserInfo(accessToken).then(function (user) {
-        User.find({ id: user.id }).then(function (dbUser) {
-            if (dbUser.length == 0) {
-                user.save().then(function () {
-                    response.json(user);
-                }, function (err) {
-                    response.status('403').send('db save user failure');
-                    return;
-                });
-            } else {
-                response.json(dbUser[0]);
-            }
+    checkOAuthAndFetchSocialUser(accessToken, platform).then(function (socialUser) {
+        userController.createUserIfNeeded(socialUser).then(function (user) {
+            user.save();
+            response.setHeader('accessToken', socialUser.accessToken);
+            response.json(user);
+
         }, function (err) {
-            response.status('403').send('db access user failure');
+            response.status('403').send('create user failure');
         });
 
     }, function (err) {
         response.status('403').send('access token access failure');
-    })
+    });
 };
+
+const checkOAuthAndFetchSocialUser = function (accessToken, platform) {
+    var options = {
+        uri: 'https://graph.facebook.com/v3.2/me',
+        qs: {
+            access_token: accessToken // -> uri + '?access_token=xxxxx%20xxxxx'
+        },
+
+        json: true // Automatically parses the JSON string in the response
+    };
+
+    return rp(options)
+        .then(function (fbUser) {
+            console.log("checkOAuthAndFetchSocialUser ");
+            console.log(fbUser);
+            var socialUser = new SocialUser();
+            socialUser.socialId = fbUser.id;
+            socialUser.name = fbUser.name;
+            socialUser.email = fbUser.email;
+            socialUser.gender = fbUser.gender;
+            socialUser.accessToken = accessToken;
+            return socialUser;
+        }, function (err) {
+            console.log("checkOAuthAndFetchSocialUser error");
+            return err;
+        });
+}
