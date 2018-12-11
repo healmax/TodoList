@@ -24,3 +24,17 @@ module.exports.createUserIfNeeded = function (socialUser, platform) {
         return err;
     });
 };
+
+module.exports.fetchUserByAccessToken = function (accessToken) {
+    console.log("fetchUserByAccessToken");
+    return User.find({ accessToken: accessToken }).then(function (users) {
+        if (users.length > 0) {
+            return users[0];
+        }
+
+        return null;
+
+    }, function (err) {
+        return err;
+    });
+};

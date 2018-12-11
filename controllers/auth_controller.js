@@ -7,6 +7,21 @@ const SocialPlatform = {
     Twitter: 1,
 }
 
+module.exports.checkPermission = function (request, response, next) {
+    var token = request.get('accessToken');
+    userController.fetchUserByAccessToken(token).then(function (user) {
+        if (!user) {
+            response.status('403').send('checkPermission : does not have Permission');
+            return;
+        }
+
+        next();
+
+    }, function (err) {
+        response.status('403').send('checkPermission : db access failure');
+    });
+}
+
 module.exports.checkOAuthAndCreateUserIfNeeded = function (request, response) {
     var accessToken = request.body.accessToken;
     var platform = request.body.platform;
